@@ -1,0 +1,80 @@
+version: '3'
+
+services:
+  rabbit_mq:
+    image: rabbitmq:management-alpine
+    container_name: rabbit_mq
+    ports:
+      - 5672:5672
+      - 15672:15672
+    volumes:
+      - rabbit_mqdata:/usr/share/rabbitmq/data
+    deploy:
+      resources:
+        limits:
+          memory: 200M
+        reservations:
+          memory: 100M
+
+  producer:
+    build: proxy_producer
+    container_name: proxy_producer
+    depends_on:
+      - rabbit_mq
+      - database
+    environment:
+      AMQP_URL: 'amqp://rabbit_mq?connection_attempts=10&retry_delay=10'
+      DB_HOST: database
+      DB_NAME: 'homestead'
+      DB_PORT: 3306
+      DB_USER: 'user'
+      DB_PASS: 'pass'
+    deploy:
+      resources:
+        limits:
+          memory: 30M
+        reservations:
+          memory: 100M
+
+  proxy-checker:
+    build:
+      context: proxy_checker
+    depends_on:
+      - rabbit_mq
+      - database
+    environment:
+      AMQP_URL: 'amqp://rabbit_mq?connection_attempts=10&retry_delay=10'
+    deploy:
+      mode: replicated
+      replicas: 2
+      resources:
+        limits:
+          memory: 30M
+        reservations:
+          memory: 100M
+
+  database:
+    image: mysql:8
+    container_name: mysql
+    command: --default-authentication-plugin=mysql_native_password
+    restart: always
+    volumes:
+      - ./db:/var/lib/mysql
+    ports:
+      - 3306:3306
+    environment:
+      MYSQL_ROOT_USER: root
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: homestead
+      MYSQL_USER: user
+      MYSQL_PASSWORD: pass
+    deploy:
+      resources:
+        limits:
+          memory: 500M
+        reservations:
+          memory: 200M
+
+volumes:
+  rabbit_mqdata:
+    driver: local
