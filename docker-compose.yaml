@@ -3,6 +3,7 @@ version: '3'
 services:
   rabbit_mq:
     image: rabbitmq:management-alpine
+    restart: always
     container_name: rabbit_mq
     ports:
       - 5672:5672
@@ -19,6 +20,7 @@ services:
   producer:
     build: proxy_producer
     container_name: proxy_producer
+    restart: always
     depends_on:
       - rabbit_mq
       - database
@@ -26,19 +28,19 @@ services:
       AMQP_URL: 'amqp://rabbit_mq?connection_attempts=10&retry_delay=10'
       DB_HOST: database
       DB_NAME: 'homestead'
-      DB_PORT: 3306
+      DB_PORT: 5432
       DB_USER: 'user'
       DB_PASS: 'pass'
     deploy:
       resources:
         limits:
-          memory: 30M
+          memory: 50M
         reservations:
           memory: 100M
 
   proxy-checker:
-    build:
-      context: proxy_checker
+    build: proxy_checker
+    restart: always
     depends_on:
       - rabbit_mq
       - database
@@ -54,27 +56,24 @@ services:
           memory: 100M
 
   database:
-    image: mysql:8
-    container_name: mysql
-    command: --default-authentication-plugin=mysql_native_password
+    image: postgres:14-alpine
     restart: always
-    volumes:
-      - ./db:/var/lib/mysql
-    ports:
-      - 3306:3306
     environment:
-      MYSQL_ROOT_USER: root
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: homestead
-      MYSQL_USER: user
-      MYSQL_PASSWORD: pass
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=pass
+      - POSTGRES_DB=homestead
+    volumes:
+      - pg_project:/var/lib/postgresql/data
+    ports:
+      - 5432:5432
     deploy:
       resources:
         limits:
-          memory: 500M
+          memory: 100M
         reservations:
           memory: 200M
 
 volumes:
+  pg_project:
   rabbit_mqdata:
     driver: local
