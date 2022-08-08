@@ -2,7 +2,7 @@ version: '3'
 
 services:
   rabbit_mq:
-    image: rabbitmq:management-alpine
+    image: rabbitmq:alpine
     restart: always
     container_name: rabbit_mq
     volumes:
@@ -15,7 +15,7 @@ services:
           memory: 100M
 
   producer:
-    build: proxy_producer
+    image: ghcr.io/ichinya/proxy_producer:main
     container_name: proxy_producer
     restart: always
     depends_on:
@@ -36,7 +36,7 @@ services:
           memory: 100M
 
   proxy-checker:
-    build: proxy_checker
+    image: ghcr.io/ichinya/proxy_cheker:main
     restart: always
     depends_on:
       - rabbit_mq
