@@ -11,17 +11,12 @@
 
 ## Запуск
 
-Клонируем исходник с гитхаб.
-Запускаем сборку.
-После запуска отправляем команды на сбор прокси и, вторую команду, на отправку собранных прокси на проверку
+Запускаем сборку. Также создаться два сервиса из образа proxy-producer, это producer_import и producer_cron. Первый при запуске проверяет сайт со списками прокси и вносит в базу. Второй запускает крон - отправка в очередь на проверку прокси, плюс переотправляет прокси каждые сутки
 
 ```shell
 git clone https://github.com/Ichinya/proxy-checker-docker.git .
 
 docker compose -f "docker-compose.yaml" up -d --build 
-
-docker exec proxy_producer python3 update_list_proxy.py
-docker exec proxy_producer python3 send_to_mq.py
 ```
 
 Для подключения к RabbitMQ, нужно использовать образ `rabbitmq:management-alpine` вместо `rabbitmq:alpine` и добавить порты к сервису:
@@ -63,7 +58,4 @@ docker exec proxy_producer python3 send_to_mq.py
 
 ## Возможно появится:
 * Работа с файлами. Закидываем файлы со списками, а после проверки - получаем готовый список
-* Будут сделаны готовые образы
 * Будет добавлен Gearman, так как кролик немало жрёт ОЗУ.
-* Команды для управления producer.
-* Планировщик. Либо cron у producer, либо отдельный образ.

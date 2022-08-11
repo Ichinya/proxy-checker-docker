@@ -35,8 +35,23 @@ services:
         reservations:
           memory: 100M
 
+  producer-cron:
+    extends: producer
+    container_name: producer_cron
+    command: ["/code/cron.sh"]
+
+  producer-import:
+    extends: producer
+    container_name: producer_import
+    restart: "no"
+    command: ["python3", "update_list_proxy.py"]
+    deploy:
+      resources:
+        limits:
+          memory: 100M
+
   proxy-checker:
-    image: ghcr.io/ichinya/proxy_cheker:main
+    image: ghcr.io/ichinya/proxy_checker:main
     restart: always
     depends_on:
       - rabbit_mq
